@@ -1,0 +1,12 @@
+{
+  "sheet_id": "여기에_구글시트_ID (주소의 /d/ 와 /edit 사이)",
+  "service_account_file": "service_account.json",
+  "delay_seconds": 2.0,
+  "w_grace_days": 21,
+  "fresh_days": 30,
+  "recent_days": 60,
+  "old_days": 90,
+  "autosub_min_volume": 100,
+  "dead_cafes": [],
+  "dead_ids": []
+}

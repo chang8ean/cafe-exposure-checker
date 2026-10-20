@@ -1,0 +1,12 @@
+# 비밀 — 절대 커밋하지 않는다
+service_account.json
+*.json.key
+config.json
+# 실행 산출물
+state/
+logs/
+.venv/
+venv/
+__pycache__/
+*.pyc
+.DS_Store
