@@ -113,6 +113,17 @@ def _dropdown(ws, col: int, values: list):
                  "strict": False, "showCustomUi": True}}}
 
 
+def _widths(ws, px: dict):
+    """열 너비(픽셀). 기본 100px 이면 키워드·비고가 잘려 보인다."""
+    return [{"updateDimensionProperties": {
+        "range": {"sheetId": ws.id, "dimension": "COLUMNS", "startIndex": i, "endIndex": i + 1},
+        "properties": {"pixelSize": w}, "fields": "pixelSize"}} for i, w in px.items()]
+
+
+def _is_blank(ws) -> bool:
+    return not any(c for r in ws.get_all_values() for c in r)     # 빈 탭도 [[]] 로 읽힌다
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--force", action="store_true")
@@ -142,6 +153,9 @@ def main():
         ws.freeze(rows=1)
         reqs.append(_dropdown(ws, MG_HEADERS.index("구분"), ["메인", "서브"]))
         reqs.append(_dropdown(ws, MG_HEADERS.index("노출여부"), ["Y", "W", "N", "D"]))
+        reqs += _widths(ws, {MG_HEADERS.index(h): w for h, w in
+                             (("날짜", 100), ("카페/블로그", 120), ("키워드", 190),
+                              ("비고", 380), ("URL", 300))})
         print(f"  [{TAB_MG}] 생성")
 
     ws, made = _get_or_make(sh, TAB_KW, 2000, len(KW_HEADERS), a.force)
@@ -151,15 +165,20 @@ def main():
         ws.batch_update([{"range": f"{c}2", "values": [[v]]} for c, v in f.items()],
                         value_input_option="USER_ENTERED")
         ws.freeze(rows=1)
+        reqs += _widths(ws, {0: 70, 1: 80, 2: 80, 3: 200, 4: 70, 5: 70, 6: 70,
+                             7: 60, 8: 60, 9: 70, 10: 50, 11: 50, 12: 50})
         for c0, c1 in ((1, 3), (4, 5), (7, 13)):          # B:C · E · H:M
             reqs.append(_protect(sh, ws, c0, c1, "수식 열 — 값을 쓰지 마세요"))
         print(f"  [{TAB_KW}] 생성")
 
     if reqs:
         sh.batch_update({"requests": reqs})
+    # 탭 순서: 사람이 자주 보는 것부터
+    order = {TAB_KW: 0, TAB_MG: 1, D: 2}
+    sh.reorder_worksheets(sorted(sh.worksheets(), key=lambda w: order.get(w.title, 9)))
     # 새 시트에 딸려 오는 빈 기본 탭 정리
     for w in sh.worksheets():
-        if w.title in ("Sheet1", "시트1") and len(sh.worksheets()) > 1 and not w.get_all_values():
+        if w.title in ("Sheet1", "시트1") and len(sh.worksheets()) > 1 and _is_blank(w):
             sh.del_worksheet(w)
     print("완료")
 
